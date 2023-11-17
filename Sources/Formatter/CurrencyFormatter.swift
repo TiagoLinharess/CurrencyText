@@ -40,7 +40,7 @@ public class CurrencyFormatter: CurrencyFormatting {
             $0.locale = Locale.current
             $0.hasDecimals = true
             $0.minValue = .zero
-            $0.maxValue = .infinity
+            $0.maxValue = 999999999999.99
         }
     }()
     

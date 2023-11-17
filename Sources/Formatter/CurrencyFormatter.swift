@@ -31,6 +31,19 @@ public protocol CurrencyAdjusting {
 
 public class CurrencyFormatter: CurrencyFormatting {
     
+    @available(iOS 16, *)
+    public static var internationalDefault: CurrencyFormatter = {
+        let currency = Locale.current.currency?.identifier ?? "BRL"
+        
+        return .init {
+            $0.currency = .init(rawValue: currency) ?? .brazilianReal
+            $0.locale = Locale.current
+            $0.hasDecimals = true
+            $0.minValue = .zero
+            $0.maxValue = 999999999999
+        }
+    }()
+    
     /// Set the locale to retrieve the currency from
     /// You can pass a Swift type Locale or one of the
     /// Locales enum options - that encapsulates all available locales.

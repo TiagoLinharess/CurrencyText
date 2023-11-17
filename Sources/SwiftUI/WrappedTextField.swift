@@ -1,6 +1,6 @@
 //
 //  WrappedTextField.swift
-//  
+//
 //
 //  Created by Marino Felipe on 24.04.21.
 //
@@ -20,31 +20,31 @@ import CurrencyUITextFieldDelegate
 final class WrappedTextField: UITextField {
     private let currencyTextFieldDelegate: CurrencyUITextFieldDelegate
     private var configuration: CurrencyTextFieldConfiguration
-
+    
     init(configuration: CurrencyTextFieldConfiguration) {
         self.configuration = configuration
         self.currencyTextFieldDelegate = CurrencyUITextFieldDelegate(formatter: configuration.formatter)
         self.currencyTextFieldDelegate.clearsWhenValueIsZero = configuration.clearsWhenValueIsZero
-
+        
         super.init(frame: .zero)
-
+        
         delegate = currencyTextFieldDelegate
         currencyTextFieldDelegate.passthroughDelegate = self
         updateText()
     }
-
+    
     @available(*, unavailable)
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-
+    
     func updateConfigurationIfNeeded(latest configuration: CurrencyTextFieldConfiguration) {
         guard configuration !== self.configuration else { return }
-
+        
         self.configuration = configuration
         self.currencyTextFieldDelegate.formatter = configuration.formatter
     }
-
+    
     func updateTextIfNeeded() {
         var updatedText: String?
         if let text = text, text.isEmpty == false {
@@ -52,11 +52,11 @@ final class WrappedTextField: UITextField {
                 .formatter
                 .formattedStringWithAdjustedDecimalSeparator(from: text)
         }
-
+        
         guard configuration.text != text || (updatedText != text && text?.isEmpty == false) else {
             return
         }
-
+        
         updateText()
     }
 }
@@ -70,25 +70,27 @@ extension WrappedTextField: UITextFieldDelegate {
         shouldChangeCharactersIn range: NSRange,
         replacementString string: String
     ) -> Bool {
-        configuration.$text.wrappedValue = textField.text ?? ""
-        updateUnformattedTextAndInputValue()
-
+        DispatchQueue.main.async {
+            self.configuration.$text.wrappedValue = textField.text ?? ""
+            self.updateUnformattedTextAndInputValue()
+        }
+        
         return false
     }
-
+    
     func textFieldDidBeginEditing(_ textField: UITextField) {
         configuration.onEditingChanged?(true)
     }
-
+    
     func textFieldDidEndEditing(_ textField: UITextField) {
         configuration.hasFocus?.wrappedValue = false
         configuration.onEditingChanged?(false)
     }
-
+    
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         configuration.onCommit?()
         textField.resignFirstResponder()
-
+        
         return true
     }
 }
@@ -107,20 +109,20 @@ private extension WrappedTextField {
         } else {
             nsRange = .init(location: 0, length: 0)
         }
-
+        
         _ = delegate?.textField?(
             self,
             shouldChangeCharactersIn: nsRange,
             replacementString: configuration.$text.wrappedValue
         )
     }
-
+    
     func updateUnformattedTextAndInputValue() {
         let unformattedText = configuration.formatter.unformatted(
             string: text ?? ""
         ) ?? ""
         configuration.unformattedText?.wrappedValue = unformattedText
-
+        
         configuration.inputAmount?.wrappedValue = configuration.formatter.double(
             from: unformattedText
         )
